@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kristin's Training Buddy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+        }
+        /* Custom scrollbar for a cleaner look in dark mode */
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-track {
+            background: #1f2937; /* scrollbar track */
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background: #4b5563; /* scrollbar thumb */
+            border-radius: 3px;
+        }
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        /* Style for the typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .chat-message p {
+            white-space: pre-wrap; /* Allows line breaks in messages */
+        }
+
+        /* Enhanced styles for more visuals */
+        .gradient-bg-accent {
+            background: linear-gradient(135deg, #a70000, #006400); /* Darker red to dark green */
+        }
+        .text-gradient-accent {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(to right, #a70000, #006400);
+        }
+        .btn-send-animated {
+            background: linear-gradient(135deg, #a70000, #006400);
+            transition: all 0.3s ease;
+        }
+        .btn-send-animated:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff0000, #00ff00); /* Brighter on hover */
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4), 0 0 20px rgba(0, 255, 0, 0.4); /* Glow effect */
+        }
+        .btn-send-animated:disabled {
+            background: #4a0000; /* Darker disabled state */
+            cursor: not-allowed;
+        }
+        /* Animated Gem Icon */
+        .gem-icon-animated {
+            background: linear-gradient(135deg, #a70000, #006400);
+            animation: sparkle 2s infinite ease-in-out alternate;
+        }
+        @keyframes sparkle {
+            0% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 0, 0, 0.2), 0 0 5px rgba(0, 255, 0, 0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(255, 0, 0, 0.4), 0 0 10px rgba(0, 255, 0, 0.4); }
+            100% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 0, 0, 0.2), 0 0 5px rgba(0, 255, 0, 0.2); }
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center bg-black p-4">
+    <div id="app" class="w-full max-w-2xl h-full max-h-[95vh] bg-gray-900 text-white rounded-2xl shadow-2xl flex flex-col p-6">
+        <!-- Header --><header class="border-b border-gray-700 pb-4 mb-4">
+            <h1 class="text-2xl font-bold text-gradient-accent">Kristin's Training Buddy 💎</h1>
+            <p class="text-sm text-gray-400">Your personal inventory coach, made with ❤️</p>
+        </header>
+
+        <!-- Chat Messages --><main id="chat-container" class="flex-1 overflow-y-auto pr-4 -mr-4 space-y-4">
+            <!-- Messages will be added here --></main>
+
+        <!-- Typing Indicator --><div id="typing-indicator-container" class="py-2 hidden">
+            <div class="flex items-start gap-3">
+                <div class="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full gem-icon-animated text-sm font-semibold text-white">G</div>
+                <div class="bg-gray-800 rounded-lg p-3 max-w-xs">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Input Form --><footer class="mt-6">
+            <div class="relative">
+                <input type="text" id="user-input" class="w-full rounded-full border border-gray-600 bg-gray-800 py-3 pl-5 pr-16 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-shadow duration-200" placeholder="Type your message...">
+                <button id="send-button" class="absolute inset-y-0 right-0 flex items-center justify-center btn-send-animated text-white rounded-full w-12 h-12 m-1.5 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send-horizontal"><path d="m3 3 3 9-3 9 19-9Z"/><path d="M6 12h16"/></svg>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator-container');
+
+        // This is where the conversation history is stored
+        let conversationHistory = [];
+        
+        // This is the system instruction that gives the AI its personality.
+        // You can customize it to make Gem perfect for your wife!
+        const systemPrompt = `You are a friendly and patient work mentor. Your main goal is to help your user, a Lead Cashier at Ace Hardware, learn all the skills she needs to become a Lead Inventory Specialist. You are an expert in retail inventory, but you explain everything in a very simple, clear, and encouraging way.
+PRIME DIRECTIVE: READING LEVEL AND TONE
+This is your most important rule. You MUST write all your answers at a 7th or 8th-grade reading level.
+This means you will ALWAYS:
+
+- Use short, simple sentences.
+- Use common, everyday words. Avoid complex business jargon.
+- If you MUST use a new term (like "SKU," "cycle count," or "shrink"), you must define it immediately using a simple example or analogy.
+- Your tone is always calm, encouraging, and patient. You never sound frustrated. You always say "That's a great question" or "We can go over that as many times as you need."
+INTERACTION STYLE: PACED LEARNING
+You must not give long, overwhelming answers. Your job is to be a conversation partner, not a textbook.
+
+- Break down every topic into small, easy-to-understand pieces.
+- After you explain ONE small piece (1-2 sentences), you MUST stop and ask a simple question to check for understanding or to see if she is ready to continue.
+- Good checking questions:
+  - "Does that make sense so far?"
+  - "Would you like me to explain that in a different way?"
+  - "Are you ready for the next part, or do you want to practice that idea?"
+  - "So, in your own words, what do you think that means?"
+CORE KNOWLEDGE: TRAINING PLAN
+You are ready to act as her personal tutor. You should be able to guide her through a learning plan, but only at her pace. You can suggest topics, but she decides what to learn.
+Your training topics include:
+
+- Inventory Basics: What is "inventory"? (Stuff the store owns). What is an "SKU"? (A unique code for each item). What is "shrink"? (Lost or stolen stuff).
+- The Counting Process: What is a "cycle count"? (Counting one small section at a time). What is a "full physical inventory"? (Counting the entire store).
+- Computer Skills (Excel): How Excel helps you. (It's a big sheet to keep lists and do math). You will simply explain sorting, adding, and finding things. If she is ready, you can very simply explain what VLOOKUP (a "super-finder") and PivotTables (a "summary-maker") do.
+- The Big Picture (Supply Chain): The journey of a product (from the factory, to a big Ace warehouse, to the store's truck, to the backroom, to the shelf).
+- Problem-Solving: What to do when the "computer count" and the "shelf count" don't match. (How to be a "count detective").
+- Leadership Skills: How a "Lead" role is different (helping teammates, communicating with managers, setting a good example).
+ON-DEMAND HELP: THE ONGOING GOAL
+Your main job is to be an "on-demand" helper she can use for her whole career. She will come to you with real-world questions from her job.
+When she asks these questions, give her simple, step-by-step, practical advice. Always follow the simple reading level and pacing rules.`;
+
+        // Function to call the Gemini API
+        const callGeminiApi = async (prompt) => {
+            // The API key is an empty string; the execution environment will provide it.
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            // Add the user's message to the history
+            conversationHistory.push({ role: 'user', parts: [{ text: prompt }] });
+            
+            setLoading(true);
+
+            try {
+                // Construct the payload
+                const payload = {
+                    contents: conversationHistory,
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                const modelResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (modelResponse) {
+                    addMessage('model', modelResponse);
+                    // Add the model's response to the history
+                    conversationHistory.push({ role: 'model', parts: [{ text: modelResponse }] });
+                } else {
+                    addMessage('model', 'Sorry, I had a little trouble thinking of a response. Could you try asking again?');
+                }
+
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                addMessage('model', 'Oh no! Something went wrong. Please check the connection and try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Function to display messages in the chat
+        const addMessage = (role, text) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start gap-3 ${role === 'user' ? 'justify-end' : ''}`;
+            
+            const sanitizedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            let content = '';
+            if (role === 'model') {
+                content = `
+                    <div class="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full gem-icon-animated text-sm font-semibold text-white">G</div>
+                    <div class="bg-gray-800 rounded-lg p-3 max-w-xs md:max-w-md chat-message">
+                        <p class="text-sm text-gray-200">${sanitizedText}</p>
+                    </div>
+                `;
+            } else { // user
+                content = `
+                    <div class="bg-green-700 text-white rounded-lg p-3 max-w-xs md:max-w-md chat-message">
+                        <p class="text-sm">${sanitizedText}</p>
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = content;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        };
+        
+        // Function to handle sending a message
+        const sendMessage = () => {
+            const message = userInput.value.trim();
+            if (message) {
+                addMessage('user', message);
+                callGeminiApi(message);
+                userInput.value = '';
+            }
+        };
+
+        // Function to show/hide the loading indicator
+        const setLoading = (isLoading) => {
+            if (isLoading) {
+                typingIndicator.classList.remove('hidden');
+                sendButton.disabled = true;
+                userInput.disabled = true;
+            } else {
+                typingIndicator.classList.add('hidden');
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+            }
+            scrollToBottom();
+        };
+
+        // Function to auto-scroll to the latest message
+        const scrollToBottom = () => {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initial welcome message from Gem
+        window.addEventListener('load', () => {
+            const welcomeMessage = `Hi there! I'm here to be your personal coach for inventory. My whole job is to help you learn everything you need to become a Lead Inventory Specialist.
+
+We can go as slow as you want, and we can start with any topic you want.
+
+What's on your mind today?
+
+- We can start with the basics (like "What is inventory?").
+- We can talk about a specific skill (like "counting").
+- Or, you can just ask me a question about your job right now.
+
+Just tell me what you'd like to do first!`;
+            addMessage('model', welcomeMessage);
+            conversationHistory.push({ role: 'model', parts: [{ text: welcomeMessage }] });
+        });
+    </script>
+</body>
+</html>
+
